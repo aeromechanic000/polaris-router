@@ -8,24 +8,13 @@ from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
 from polaris.config import load_config
-from polaris.models import AppConfig, ChatCompletionRequest, ModelConfig
-from polaris.providers.openai import OpenAIProvider
+from polaris.models import AnthropicRequest, AppConfig, ModelConfig
+from polaris.providers.anthropic import AnthropicProvider
 from polaris.router import Router
 
 logger = logging.getLogger("polaris")
 
-PROVIDERS = {
-    "openai": OpenAIProvider(),
-}
-DEFAULT_PROVIDER = "openai"
-
-
-def _get_provider(provider_name: str | None):
-    name = provider_name or DEFAULT_PROVIDER
-    provider = PROVIDERS.get(name)
-    if provider is None:
-        raise ValueError(f"Unknown provider: {name}")
-    return provider
+PROVIDER = AnthropicProvider()
 
 
 def create_app(config: AppConfig) -> FastAPI:
@@ -65,10 +54,10 @@ async def list_models(
     }
 
 
-@_api_router.post("/v1/chat/completions")
-async def chat_completions(
+@_api_router.post("/v1/messages")
+async def messages(
     request: Request,
-    body: ChatCompletionRequest,
+    body: AnthropicRequest,
 ):
     config: AppConfig = request.app.state.config
     router: Router = request.app.state.router
@@ -87,36 +76,34 @@ async def chat_completions(
 
 
 async def _completion_with_fallback(
-    request: ChatCompletionRequest, model_config: ModelConfig, router: Router
+    request: AnthropicRequest, model_config: ModelConfig, router: Router
 ):
     errors: list[str] = []
     for endpoint in model_config.endpoints:
         try:
-            provider = _get_provider(endpoint.provider)
-            return await provider.chat_completion(endpoint, request)
+            return await PROVIDER.chat_completion(endpoint, request)
         except Exception as e:
             logger.warning("Endpoint %s failed: %s", endpoint.base_url, e)
             errors.append(f"{endpoint.base_url}: {e}")
-    raise HTTPException(status_code=502, detail={"message": "All endpoints failed", "errors": errors})
+    raise HTTPException(
+        status_code=502,
+        detail={"type": "error", "error": {"type": "api_error", "message": "All endpoints failed", "details": errors}},
+    )
 
 
 async def _stream_with_fallback(
-    request: ChatCompletionRequest, model_config: ModelConfig, router: Router
+    request: AnthropicRequest, model_config: ModelConfig, router: Router
 ) -> AsyncIterator[bytes]:
     for endpoint in model_config.endpoints:
         try:
-            provider = _get_provider(endpoint.provider)
-            async for chunk in provider.chat_completion_stream(endpoint, request):
-                data = f"data: {chunk.model_dump_json()}\n\n"
-                yield data.encode()
-            yield b"data: [DONE]\n\n"
+            async for chunk in PROVIDER.chat_completion_stream(endpoint, request):
+                yield chunk
             return
         except Exception as e:
             logger.warning("Stream endpoint %s failed: %s", endpoint.base_url, e)
             continue
-    error_payload = json.dumps({"error": {"message": "All endpoints failed"}})
-    yield f"data: {error_payload}\n\n".encode()
-    yield b"data: [DONE]\n\n"
+    error_payload = json.dumps({"type": "error", "error": {"type": "api_error", "message": "All endpoints failed"}})
+    yield f"event: error\ndata: {error_payload}\n\n".encode()
 
 
 app = load_app()

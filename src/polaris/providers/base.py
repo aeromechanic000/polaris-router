@@ -5,20 +5,19 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 from polaris.models import (
-    ChatCompletionRequest,
-    ChatCompletionResponse,
+    AnthropicRequest,
+    AnthropicResponse,
     EndpointConfig,
-    StreamChunk,
 )
 
 
 class BaseProvider(ABC):
     @abstractmethod
     async def chat_completion(
-        self, endpoint: EndpointConfig, request: ChatCompletionRequest, extra: dict[str, Any] | None = None
-    ) -> ChatCompletionResponse: ...
+        self, endpoint: EndpointConfig, request: AnthropicRequest, extra: dict[str, Any] | None = None
+    ) -> AnthropicResponse: ...
 
     @abstractmethod
     async def chat_completion_stream(
-        self, endpoint: EndpointConfig, request: ChatCompletionRequest, extra: dict[str, Any] | None = None
-    ) -> AsyncIterator[StreamChunk]: ...
+        self, endpoint: EndpointConfig, request: AnthropicRequest, extra: dict[str, Any] | None = None
+    ) -> AsyncIterator[bytes]: ...
