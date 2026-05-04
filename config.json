@@ -1,0 +1,24 @@
+{
+  "models": {
+    "code": {
+      "strategy": "round-robin",
+      "endpoints": [
+        {
+          "base_url": "https://openrouter.ai/api",
+          "model": "nvidia/nemotron-3-super-120b-a12b:free",
+          "api_key": "env:OPENROUTER_API_KEY"
+        },
+        {
+          "base_url": "https://openrouter.ai/api",
+          "model": "z-ai/glm-4.5-air:free",
+          "api_key": "env:OPENROUTER_API_KEY"
+        },
+        {
+          "base_url": "https://openrouter.ai/api",
+          "model": "openai/gpt-oss-120b:free",
+          "api_key": "env:OPENROUTER_API_KEY"
+        }
+      ]
+    }
+  }
+}
