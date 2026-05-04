@@ -90,7 +90,9 @@ Use `env:VAR_NAME` as the `api_key` value to read from an environment variable a
 
 Polaris exposes an Anthropic-compatible Messages API, so Claude Code can connect to it by setting the Anthropic base URL.
 
-### Option 1: System-wide environment variables
+### Connecting to Polaris
+
+#### Option 1: System-wide environment variables
 
 Set these in your shell profile (`~/.zshrc`, `~/.bashrc`, etc.):
 
@@ -105,7 +107,7 @@ Then launch Claude Code normally:
 claude
 ```
 
-### Option 2: Project-level settings
+#### Option 2: Project-level settings
 
 In your project's `.claude/settings.json` or the global `~/.claude/settings.json`, set the environment variables:
 
@@ -118,12 +120,62 @@ In your project's `.claude/settings.json` or the global `~/.claude/settings.json
 }
 ```
 
-### Option 3: Per-session
+#### Option 3: Per-session
 
 Prefix the Claude Code command:
 
 ```bash
 ANTHROPIC_BASE_URL=http://localhost:11565 ANTHROPIC_API_KEY=any-value claude
+```
+
+### Configuring models for Claude Code
+
+Claude Code uses model aliases (`opus`, `sonnet`, `haiku`) internally. Map these aliases to model names defined in your `config.json` using environment variables:
+
+| Variable | Purpose |
+|---|---|
+| `ANTHROPIC_MODEL` | Default model (can be an alias or full model name) |
+| `ANTHROPIC_DEFAULT_OPUS_MODEL` | Model used for the `opus` alias |
+| `ANTHROPIC_DEFAULT_SONNET_MODEL` | Model used for the `sonnet` alias |
+| `ANTHROPIC_DEFAULT_HAIKU_MODEL` | Model used for the `haiku` alias |
+| `CLAUDE_CODE_SUBAGENT_MODEL` | Model used for subagents |
+
+The values must match model names defined in `config.json`. For example:
+
+```bash
+export ANTHROPIC_BASE_URL=http://localhost:11565
+export ANTHROPIC_API_KEY=any-value
+export ANTHROPIC_DEFAULT_OPUS_MODEL=code
+export ANTHROPIC_DEFAULT_SONNET_MODEL=code
+export ANTHROPIC_DEFAULT_HAIKU_MODEL=code
+export CLAUDE_CODE_SUBAGENT_MODEL=code
+```
+
+With a `config.json` like:
+
+```json
+{
+  "models": {
+    "opus": {
+      "strategy": "round-robin",
+      "endpoints": [
+        { "base_url": "https://openrouter.ai/api/v1", "model": "anthropic/claude-opus-4", "api_key": "env:OPENROUTER_API_KEY" }
+      ]
+    },
+    "sonnet": {
+      "strategy": "round-robin",
+      "endpoints": [
+        { "base_url": "https://openrouter.ai/api/v1", "model": "anthropic/claude-sonnet-4", "api_key": "env:OPENROUTER_API_KEY" }
+      ]
+    },
+    "haiku": {
+      "strategy": "round-robin",
+      "endpoints": [
+        { "base_url": "https://openrouter.ai/api/v1", "model": "anthropic/claude-haiku-4", "api_key": "env:OPENROUTER_API_KEY" }
+      ]
+    }
+  }
+}
 ```
 
 ## API usage

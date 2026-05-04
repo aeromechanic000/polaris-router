@@ -15,6 +15,16 @@
         },
         {
           "base_url": "https://openrouter.ai/api/v1",
+          "model": "minimax/minimax-m2.5:free",
+          "api_key": "env:OPENROUTER_API_KEY"
+        },
+        {
+          "base_url": "https://openrouter.ai/api/v1",
+          "model": "poolside/laguna-m.1:free",
+          "api_key": "env:OPENROUTER_API_KEY"
+        },
+        {
+          "base_url": "https://openrouter.ai/api/v1",
           "model": "openai/gpt-oss-120b:free",
           "api_key": "env:OPENROUTER_API_KEY"
         }

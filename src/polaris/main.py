@@ -79,7 +79,8 @@ async def _completion_with_fallback(
     request: AnthropicRequest, model_config: ModelConfig, router: Router
 ):
     errors: list[str] = []
-    for endpoint in model_config.endpoints:
+    endpoints = router.select_ordered(request.model, model_config)
+    for endpoint in endpoints:
         try:
             return await PROVIDER.chat_completion(endpoint, request)
         except Exception as e:
@@ -94,7 +95,8 @@ async def _completion_with_fallback(
 async def _stream_with_fallback(
     request: AnthropicRequest, model_config: ModelConfig, router: Router
 ) -> AsyncIterator[bytes]:
-    for endpoint in model_config.endpoints:
+    endpoints = router.select_ordered(request.model, model_config)
+    for endpoint in endpoints:
         try:
             async for chunk in PROVIDER.chat_completion_stream(endpoint, request):
                 yield chunk
